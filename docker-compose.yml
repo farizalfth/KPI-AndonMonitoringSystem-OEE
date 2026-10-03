@@ -1,0 +1,42 @@
+# Local development services for the Andon Monitoring System & OEE.
+# Production uses NeonDB, so only PostgreSQL is needed here.
+#
+#   docker compose up -d postgres
+#   npm run db:schema && npm run db:seed
+#
+# An MQTT broker is optional: it is only used from Phase 4 (member 3).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: andon-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: andon
+      POSTGRES_PASSWORD: andon
+      POSTGRES_DB: andon_oee
+      # Deterministic collation so ORDER BY matches CI.
+      POSTGRES_INITDB_ARGS: '--locale=C --encoding=UTF8'
+    ports:
+      - '5432:5432'
+    volumes:
+      - andon-pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U andon -d andon_oee']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Optional broker for the operator -> backend ingest (Phase 4).
+  # mosquitto:
+  #   image: eclipse-mosquitto:2
+  #   container_name: andon-mqtt
+  #   restart: unless-stopped
+  #   ports:
+  #     - '1883:1883'
+  #   command: mosquitto -c /mosquitto-no-auth.conf
+
+volumes:
+  andon-pgdata:

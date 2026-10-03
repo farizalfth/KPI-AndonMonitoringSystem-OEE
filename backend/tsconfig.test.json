@@ -1,0 +1,11 @@
+{
+  "name": "andon-backend",
+  "description": "Typecheck configuration for the test sources (vitest globals included).",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
+}

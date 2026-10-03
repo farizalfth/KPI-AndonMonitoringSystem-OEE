@@ -1,0 +1,37 @@
+{
+  "name": "andon-oee-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Andon Monitoring System & OEE - Masterdata, Work Order, Operator Playground, Andon/OEE and Production Analytics in one repository",
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "postinstall": "npm run build -w @andon/shared",
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "npm run dev -w backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "build": "npm run build -w @andon/shared && npm run build -w backend && npm run build -w frontend",
+    "build:frontend": "npm run build -w frontend",
+    "build:backend": "npm run build -w backend",
+    "typecheck": "npm run typecheck -w @andon/shared && npm run typecheck -w backend && npm run typecheck -w frontend",
+    "lint": "npm run lint -w backend && npm run lint -w frontend",
+    "test": "npm run test -w backend && npm run test -w frontend",
+    "db:schema": "node scripts/db.mjs schema",
+    "db:seed": "node scripts/db.mjs seed",
+    "db:reset": "node scripts/db.mjs reset",
+    "db:status": "node scripts/db.mjs status",
+    "format": "prettier --write \"**/*.{ts,vue,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,vue,json,md}\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
+}
