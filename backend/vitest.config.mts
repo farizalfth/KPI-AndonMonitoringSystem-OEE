@@ -1,7 +1,13 @@
 import { defineConfig } from 'vitest/config';
+import { fileURLToPath } from 'node:url';
+
+const backendRoot = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   test: {
+    typecheck: {
+      tsconfig: `${backendRoot}/tsconfig.json`,
+    },
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     globals: false,

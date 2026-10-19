@@ -1,10 +1,12 @@
 import type { AuthenticatedUser, LoginResponse } from '@andon/shared';
+import { PERMISSIONS } from '@andon/shared';
 
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
 import { getOne, post } from '@/services/api';
 import { ApiError } from '@/services/api-error';
+import { markServerOffline, markServerOnline } from '@/services/resource';
 import { readAccessToken, writeAccessToken } from '@/services/token-storage';
 
 /**
@@ -13,7 +15,30 @@ import { readAccessToken, writeAccessToken } from '@/services/token-storage';
  * The JWT is kept in localStorage so a page reload (and the Andon board on a
  * plant TV) does not require a new login. The user object is re-validated from
  * `/api/auth/me` on boot, which also rejects tokens of deactivated accounts.
+ *
+ * Offline/demo mode: when the backend cannot be reached the store opens a
+ * local demo session (ADMIN, every permission) instead of failing, so the
+ * screens — and their CRUD — stay usable without a server. A real 4xx answer
+ * is never converted into a demo session.
  */
+const DEMO_TOKEN = 'demo-offline-session';
+
+function demoUser(): AuthenticatedUser {
+  const now = new Date().toISOString();
+  return {
+    id: 'demo-user',
+    email: 'demo@example.com',
+    fullName: 'Demo Admin',
+    roleId: 'demo-role',
+    roleCode: 'ADMIN',
+    roleName: 'Administrator (demo)',
+    isActive: true,
+    lastLoginAt: now,
+    createdAt: now,
+    updatedAt: now,
+    permissions: Object.values(PERMISSIONS),
+  };
+}
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthenticatedUser | null>(null);
   const accessToken = ref<string | null>(readAccessToken());
@@ -50,8 +75,16 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true;
     try {
       const result = await post<LoginResponse>('/auth/login', { email, password });
+      markServerOnline();
       setSession(result.accessToken, result.user);
     } catch (error) {
+      // Server unreachable: fall back to the local demo session instead of
+      // blocking the whole app behind a connection error.
+      if (error instanceof ApiError && error.status === 0) {
+        markServerOffline();
+        setSession(DEMO_TOKEN, demoUser());
+        return;
+      }
       if (error instanceof ApiError) throw error;
       throw new ApiError('Login failed', 'UNKNOWN', 0);
     } finally {
@@ -78,9 +111,17 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const me = await getOne<AuthenticatedUser>('/auth/me');
+      markServerOnline();
       user.value = me;
       return me;
-    } catch {
+    } catch (error) {
+      // Offline with a stored token: keep the session alive as the demo user
+      // so a reload does not kick the operator back to the login screen.
+      if (accessToken.value && error instanceof ApiError && error.status === 0) {
+        markServerOffline();
+        user.value = demoUser();
+        return user.value;
+      }
       clearSession();
       return null;
     } finally {

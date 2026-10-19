@@ -266,6 +266,50 @@ describe('database integration', () => {
     });
   });
 
+  describe('resources with joins', () => {
+    // `production_setups` LEFT JOINs items and machines, both of which have a
+    // `code` and `name` column. An unqualified column reference made every
+    // request fail with `column reference "code" is ambiguous`, and this
+    // endpoint had no coverage, so it is pinned here.
+    it('lists production setups with joined item and machine names', async () => {
+      const response = await request(app)
+        .get('/api/production-setups')
+        .set('Authorization', `Bearer ${adminToken()}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.meta.total).toBe(3);
+      expect(response.body.data[0]).toMatchObject({
+        code: 'PS-001',
+        itemName: expect.any(String),
+        machineName: expect.any(String),
+        setupMinutes: expect.any(Number),
+      });
+    });
+
+    it('sorts by a joined-resource column', async () => {
+      const response = await request(app)
+        .get('/api/production-setups?sortBy=code&sortOrder=desc')
+        .set('Authorization', `Bearer ${adminToken()}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.map((row: { code: string }) => row.code)).toEqual([
+        'PS-003',
+        'PS-002',
+        'PS-001',
+      ]);
+    });
+
+    it('searches across the base table only', async () => {
+      const response = await request(app)
+        .get('/api/production-setups?search=PS-002')
+        .set('Authorization', `Bearer ${adminToken()}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0].code).toBe('PS-002');
+    });
+  });
+
   describe('user management', () => {
     it('creates a user, then rejects the duplicate email', async () => {
       const roles = await database.sql<{ id: string }>(

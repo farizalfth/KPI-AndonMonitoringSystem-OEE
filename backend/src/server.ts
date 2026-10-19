@@ -25,6 +25,20 @@ async function bootstrap(): Promise<void> {
     }
   });
 
+  // Without this the process dies with a bare EADDRINUSE stack trace, which is
+  // usually just a second `npm run dev` still running in another terminal.
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') {
+      logger.error(
+        `Port ${env.PORT} is already in use — another dev server is already running. ` +
+          `Stop it (pkill -f "tsx watch"), or set PORT in backend/.env.`,
+      );
+      process.exit(1);
+    }
+    logger.error({ err: error }, 'HTTP server error');
+    process.exit(1);
+  });
+
   const databaseUp = await checkDatabaseConnection();
   if (!databaseUp) {
     logger.warn(

@@ -6,7 +6,7 @@ import { PERMISSIONS } from '@andon/shared';
 
 import PageHeader from '@/components/ui/PageHeader.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
-import { getList } from '@/services/api';
+import { listRows } from '@/services/resource';
 import { useAuthStore } from '@/stores/auth';
 
 const auth = useAuthStore();
@@ -31,7 +31,7 @@ onMounted(async () => {
     return;
   }
   try {
-    const { data } = await getList<Machine>('/masterdata/machines', { page: 1, limit: 100, sortBy: 'code' });
+    const { data } = await listRows<Machine>('/machines', { page: 1, limit: 100, sortBy: 'code' });
     machines.value = data;
   } catch (caught) {
     error.value = caught instanceof Error ? caught.message : 'Failed to load machines.';
@@ -103,11 +103,9 @@ onMounted(async () => {
       <div class="card p-4 lg:col-span-2">
         <h3 class="text-sm font-semibold text-slate-700">Implementation status</h3>
         <ul class="mt-2 space-y-2 text-sm text-slate-600">
-          <li><span class="font-medium text-emerald-700">Done</span> — authentication, RBAC and master data CRUD.</li>
-          <li><span class="font-medium text-slate-700">Phase 3</span> — work orders and approvals.</li>
-          <li><span class="font-medium text-slate-700">Phase 4</span> — operator forms, MQTT ingest and OEE computation.</li>
-          <li><span class="font-medium text-slate-700">Phase 5</span> — Andon board over Socket.IO.</li>
-          <li><span class="font-medium text-slate-700">Phase 6</span> — analytics charts and reports.</li>
+          <li><span class="font-medium text-emerald-700">Done</span> — authentication, RBAC and master data CRUD against the API.</li>
+          <li><span class="font-medium text-amber-700">Demo data</span> — work orders, operator events, Andon events and KPI snapshots run on dummy data stored in this browser.</li>
+          <li><span class="font-medium text-slate-700">Next</span> — swap the demo data for the real work order, production, realtime and analytics APIs.</li>
         </ul>
       </div>
       <div class="card p-4">

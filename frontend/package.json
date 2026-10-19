@@ -9,7 +9,7 @@
     "build": "vue-tsc --build --force && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --build --force",
-    "lint": "eslint src --max-warnings 0",
+    "lint": "eslint src tests --max-warnings 0",
     "lint:fix": "eslint src --fix",
     "test": "vitest run",
     "test:watch": "vitest"

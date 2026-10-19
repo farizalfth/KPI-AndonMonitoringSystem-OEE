@@ -4,6 +4,8 @@ import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import NavIcon from '@/components/ui/NavIcon.vue';
+import { resetLocalData } from '@/services/local-data';
+import { serverOffline } from '@/services/resource';
 import { useAuthStore } from '@/stores/auth';
 import { navigation, visibleSections } from '@/types/navigation';
 
@@ -26,6 +28,16 @@ watch(
 async function handleLogout(): Promise<void> {
   await auth.logout();
   await router.push({ name: 'login' });
+}
+
+function resetDemo(): void {
+  resetLocalData();
+  window.location.reload();
+}
+
+function reconnect(): void {
+  serverOffline.value = false;
+  window.location.reload();
 }
 </script>
 
@@ -99,6 +111,23 @@ async function handleLogout(): Promise<void> {
           </button>
         </div>
       </header>
+
+      <div
+        v-if="serverOffline"
+        class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-800"
+        role="status"
+      >
+        <span class="font-semibold uppercase tracking-wide">Demo mode</span>
+        <span>Backend unreachable — records live in this browser only (localStorage).</span>
+        <span class="ml-auto flex items-center gap-3">
+          <button class="font-semibold underline underline-offset-2 hover:text-amber-900" type="button" @click="reconnect">
+            Retry connection
+          </button>
+          <button class="font-semibold underline underline-offset-2 hover:text-amber-900" type="button" @click="resetDemo">
+            Reset demo data
+          </button>
+        </span>
+      </div>
 
       <main class="min-w-0 flex-1 overflow-y-auto p-4 lg:p-6">
         <RouterView />

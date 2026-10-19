@@ -14,6 +14,7 @@ export default tseslint.config(
       parserOptions: {
         parser: tseslint.parser,
         extraFileExtensions: ['.vue'],
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
@@ -29,6 +30,7 @@ export default tseslint.config(
     files: ['**/*.{ts,vue}'],
     languageOptions: {
       globals: { ...globals.browser },
+      parserOptions: { tsconfigRootDir: import.meta.dirname },
     },
     rules: {
       '@typescript-eslint/no-unused-vars': [

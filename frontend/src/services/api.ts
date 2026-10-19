@@ -53,13 +53,19 @@ http.interceptors.response.use(
     }
 
     if (!body || typeof body !== 'object' || !('error' in body)) {
+      // The backend never answered with its envelope (dev proxy error page,
+      // gateway timeout, CORS block, …). This is a transport failure, not an
+      // API error: the status is normalised to 0 so callers can tell "the
+      // server did not answer" apart from "the server rejected the request"
+      // and fall back to the local demo store.
       return Promise.reject(
         new ApiError(
           error.code === 'ECONNABORTED'
             ? 'The server took too long to respond.'
             : 'Cannot reach the server. Is the backend running?',
           error.code === 'ECONNABORTED' ? 'TIMEOUT' : 'NETWORK_ERROR',
-          status,
+          0,
+          { httpStatus: status },
         ),
       );
     }

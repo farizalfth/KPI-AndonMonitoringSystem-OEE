@@ -26,6 +26,8 @@ const inputType = computed(() => {
       return 'number';
     case 'datetime':
       return 'datetime-local';
+    case 'date':
+      return 'date';
     default:
       return 'text';
   }

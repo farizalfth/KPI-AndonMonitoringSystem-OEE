@@ -35,7 +35,7 @@ const config: CrudPageProps = {
       type: 'select',
       required: true,
       colSpan: 2,
-      optionsSource: { path: '/masterdata/roles', labelKey: 'name', valueKey: 'id', params: { sortBy: 'name' } },
+      optionsSource: { path: '/roles', labelKey: 'name', valueKey: 'id', params: { sortBy: 'name' } },
       hint: 'Permissions are derived from the role on every login.',
     },
     {

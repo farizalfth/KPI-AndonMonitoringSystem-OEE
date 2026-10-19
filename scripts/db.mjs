@@ -97,7 +97,7 @@ const commands = {
 
   async status() {
     await withClient(async (client) => {
-      const { rows } = await client.query<{ table_name: string }>(
+      const { rows } = await client.query(
         `SELECT table_name
            FROM information_schema.tables
           WHERE table_schema = 'public'
@@ -110,7 +110,7 @@ const commands = {
           console.log(`  - ${table.padEnd(20)} MISSING`);
           continue;
         }
-        const count = await client.query<{ count: string }>(
+        const count = await client.query(
           `SELECT count(*)::text AS count FROM ${table}`,
         );
         console.log(`  - ${table.padEnd(20)} ${count.rows[0]?.count ?? '0'} rows`);

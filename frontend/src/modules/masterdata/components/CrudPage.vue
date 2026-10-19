@@ -8,7 +8,9 @@ import NavIcon from '@/components/ui/NavIcon.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import FormField from '@/modules/masterdata/components/FormField.vue';
 import type { CrudPageProps, FieldConfig, FieldValue, SelectSource } from '@/modules/masterdata/types';
-import { ApiError, getList, post, put, remove } from '@/services/api';
+import { ApiError } from '@/services/api';
+import { masterdataPath } from '@/services/paths';
+import { createRow, deleteRow, listRows, updateRow } from '@/services/resource';
 
 /**
  * Data-driven CRUD screen shared by every Master Data page.
@@ -21,7 +23,7 @@ const props = defineProps<CrudPageProps>();
 
 type Row = Record<string, unknown>;
 
-const path = `/masterdata/${props.resource}`;
+const path = masterdataPath(props.resource);
 
 const rows = shallowRef<Row[]>([]);
 const meta = shallowRef<PaginationMeta | null>(null);
@@ -54,7 +56,7 @@ async function loadSelectOptions(): Promise<void> {
   for (const field of pending) {
     const source = field.optionsSource!;
     try {
-      const { data } = await getList<Row>(source.path, {
+      const { data } = await listRows<Row>(source.path, {
         page: 1,
         limit: 100,
         sortBy: 'code',
@@ -77,11 +79,12 @@ async function fetchRows(): Promise<void> {
   loading.value = true;
   error.value = null;
   try {
-    const result = await getList<Row>(path, {
+    const result = await listRows<Row>(path, {
       page: page.value,
       limit: limit.value,
       ...(search.value ? { search: search.value } : {}),
       ...(props.defaultSortBy ? { sortBy: props.defaultSortBy } : {}),
+      ...(props.defaultSortOrder ? { sortOrder: props.defaultSortOrder } : {}),
       ...props.params,
     });
     rows.value = result.data;
@@ -204,8 +207,8 @@ async function save(): Promise<void> {
   saving.value = true;
   formError.value = null;
   try {
-    if (editing.value) await put<Row>(`${path}/${String(editing.value.id)}`, buildPayload());
-    else await post<Row>(path, buildPayload());
+    if (editing.value) await updateRow<Row>(path, String(editing.value.id), buildPayload());
+    else await createRow<Row>(path, buildPayload());
     formOpen.value = false;
     await fetchRows();
   } catch (caught) {
@@ -219,7 +222,7 @@ async function confirmDelete(): Promise<void> {
   if (!deleting.value) return;
   deletingBusy.value = true;
   try {
-    await remove(`${path}/${String(deleting.value.id)}`);
+    await deleteRow(path, String(deleting.value.id));
     confirmOpen.value = false;
     deleting.value = null;
     if (rows.value.length === 1 && page.value > 1) page.value -= 1;

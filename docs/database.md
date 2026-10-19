@@ -127,6 +127,30 @@ ALTER TABLE machines ALTER COLUMN barcode DROP DEFAULT;
 -- perbarui shared DTO + docs/api.md di PR yang sama
 ```
 
+## 4.1 Menjalankan database lokal tanpa Docker
+
+`scripts/pglite-server.mjs` menjalankan [PGlite](https://pglite.dev) — PostgreSQL
+yang dikompilasi ke WebAssembly — lalu menyajikannya lewat **PostgreSQL wire
+protocol** di `tcp://127.0.0.1:54329/postgres`. Karena itu `node-postgres` (dan
+seluruh backend) tetap memakai `DATABASE_URL` biasa:
+
+```bash
+npm run db:server                                   # schema + seed otomatis
+# backend/.env
+DATABASE_URL=postgres://postgres@127.0.0.1:54329/postgres
+DB_SSL=false
+npm run dev
+```
+
+- Direktori data `.pglite/` di-git-ignore; `npm run db:server -- --fresh`
+  mengulang dari database kosong.
+- Skema dan seed tetap `database/schema.sql` dan `database/seed.sql` — tidak
+  ada skema khusus PGlite, jadi perilakunya sama dengan NeonDB.
+- Extension `pgcrypto` (`gen_random_uuid()`) tersedia di PGlite; di NeonDB
+  sudah aktif secara default.
+- Test integrasi memakai mesin yang sama secara in-process, sehingga bug unique
+  constraint, trigger, dan `ON DELETE` tertangkap tanpa Docker maupun NeonDB.
+
 ## 5. Credential demo
 
 | Email                    | Password       | Role       |

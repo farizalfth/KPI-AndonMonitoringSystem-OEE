@@ -4,7 +4,7 @@ import type { TableColumn } from '@/components/ui/table';
  * Declarative configuration for a Master Data CRUD screen.
  * See `modules/masterdata/components/CrudPage.vue`.
  */
-export type FieldType = 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'password' | 'datetime';
+export type FieldType = 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'password' | 'datetime' | 'date';
 
 export type FieldValue = string | number | boolean | null;
 
@@ -52,6 +52,7 @@ export interface CrudPageProps {
   /** Columns searched by the search box (`searchFields` query param). */
   searchFields?: string[];
   defaultSortBy?: string;
+  defaultSortOrder?: 'asc' | 'desc';
   /** Extra query params sent with every list request. */
   params?: Record<string, unknown>;
   createLabel?: string;

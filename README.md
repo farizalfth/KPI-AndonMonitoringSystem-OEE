@@ -79,8 +79,9 @@ API contract and one permission model, and splits the work by module instead.
 
 ## Quick start
 
-**Prerequisites:** Node.js `>= 20.19`, npm 10+, and a PostgreSQL database
-(local Docker container or a free NeonDB branch).
+**Prerequisites:** Node.js `>= 20.19` and npm 10+. A PostgreSQL database is
+required too — use Docker, a free NeonDB branch, or the bundled zero-install
+PGlite server (no Docker needed, see below).
 
 ```bash
 # 1. Install every workspace (postinstall builds @andon/shared automatically)
@@ -89,6 +90,7 @@ npm install
 # 2. Configure the environment
 cp backend/.env.example backend/.env      # set DATABASE_URL and JWT_SECRET
 cp frontend/.env.example frontend/.env    # optional, dev proxy is the default
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"  # JWT_SECRET
 
 # 3. Prepare the database (idempotent, safe to re-run)
 npm run db:schema
@@ -99,7 +101,7 @@ npm run db:status
 npm run dev
 ```
 
-- API → <http://localhost:4000> (`/api/health`, `/api/ready`)
+- API → <http://localhost:4000> (`/api/health`, `/api/health/ready`)
 - Web → <http://localhost:5173> (Vite proxies `/api` to the backend, so no CORS
   setup is needed in development)
 
@@ -109,7 +111,29 @@ Generate a JWT secret with:
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-Prefer a throwaway local database?
+### No Docker? Run PostgreSQL in-process
+
+`scripts/pglite-server.mjs` boots [PGlite](https://pglite.dev) (PostgreSQL
+compiled to WebAssembly) and serves it over the PostgreSQL wire protocol, so the
+backend connects to it with an ordinary `DATABASE_URL`. Nothing to install and no
+external account:
+
+```bash
+npm run db:server               # tcp://127.0.0.1:54329/postgres, schema + seed applied
+```
+
+```bash
+# backend/.env
+DATABASE_URL=postgres://postgres@127.0.0.1:54329/postgres
+DB_SSL=false
+```
+
+Leave it running in its own terminal and start the app with `npm run dev`. The
+data directory is `.pglite/` (git-ignored); `npm run db:server -- --fresh`
+starts over from an empty database. The integration tests use the same engine
+in-process, so behaviour matches what you develop against.
+
+With Docker instead:
 
 ```bash
 docker compose up -d postgres   # schema + seed are mounted as init scripts
@@ -141,11 +165,11 @@ docker compose up -d postgres   # schema + seed are mounted as init scripts
 ├── frontend/    Vue 3 + Vite application
 │   ├── src/components/   reusable UI (DataTable, BaseModal, StatusBadge, …)
 │   ├── src/modules/      feature folders (masterdata + placeholders per owner)
-│   ├── src/services/     axios instance, ApiError, token storage
+│   ├── src/services/     axios instance, ApiError, token storage, REST paths
 │   ├── src/stores/       Pinia auth store
 │   └── src/views/        Login, Dashboard, Forbidden, NotFound, Placeholder
 ├── database/    schema.sql (13 tables), seed.sql, structure notes
-├── scripts/     db.mjs — schema | seed | reset | status
+├── scripts/     db.mjs — schema | seed | reset | status; pglite-server.mjs — local DB
 └── docs/        api.md, architecture.md, database.md, collaboration.md
 ```
 
@@ -161,8 +185,9 @@ pages only declares its columns and form fields.
 | `npm run build`                  | Build shared → backend → frontend     |
 | `npm run typecheck`              | Type-check all three workspaces       |
 | `npm run lint`                   | ESLint backend + frontend             |
-| `npm test`                       | 88 backend tests + 6 frontend tests   |
+| `npm test`                       | 91 backend tests + 9 frontend tests   |
 | `npm run db:schema` / `db:seed`  | Apply schema / seed (both idempotent) |
+| `npm run db:server`              | Local PGlite PostgreSQL (no Docker)   |
 | `npm run db:reset` / `db:status` | Drop + recreate / inspect tables      |
 | `npm run format`                 | Prettier                              |
 

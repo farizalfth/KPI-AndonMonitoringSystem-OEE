@@ -29,7 +29,10 @@ async function submit(): Promise<void> {
   }
 
   try {
-    await auth.login(email.value.trim(), password.value);
+    // Both fields are trimmed: a pasted credential often carries a leading or
+    // trailing space, which would otherwise fail as "Invalid email or password".
+    // The API still compares the submitted password verbatim.
+    await auth.login(email.value.trim(), password.value.trim());
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/dashboard';
     await router.replace(redirect);
   } catch (caught) {
@@ -137,6 +140,10 @@ function useDemoAccount(demoEmail: string): void {
               </button>
             </li>
           </ul>
+          <p class="mt-3 text-xs leading-relaxed text-slate-400">
+            Backend unreachable? Any credentials open a local demo session with dummy data stored in this
+            browser, so every screen (and its CRUD) still works.
+          </p>
         </div>
       </div>
     </div>

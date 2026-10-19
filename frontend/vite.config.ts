@@ -22,7 +22,10 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
-      strictPort: false,
+      // Fail loudly instead of silently moving to 5174: a frontend on a
+      // different port than the one the team has bookmarked causes confusing
+      // "login does not work" reports.
+      strictPort: true,
       // Dev proxy: the frontend can call `/api/...` without CORS in development.
       proxy: {
         '/api': {

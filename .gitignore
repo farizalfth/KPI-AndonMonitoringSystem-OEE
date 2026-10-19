@@ -39,3 +39,5 @@ Thumbs.db
 # Local database volume (docker-compose)
 pgdata/
 mosquitto-data/
+# Local PGlite dev database (scripts/pglite-server.mjs)
+.pglite/

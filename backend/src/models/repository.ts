@@ -67,9 +67,21 @@ export function createRepository<T>(definition: RepositoryDefinition<T>) {
   };
 
   const allFields = { ...baseFields, ...fields };
+
+  /**
+   * Prefix a bare column name with the table alias.
+   *
+   * Definitions may list plain columns (`code`) or already qualified
+   * references/expressions (`u.email`, `COALESCE(x, 0)`). Only the former need
+   * the alias — and without it a resource with joins fails at runtime with
+   * `column reference "code" is ambiguous`.
+   */
+  const qualify = (column: string): string =>
+    /^[a-z_][a-z0-9_]*$/i.test(column.trim()) ? `${alias}.${column.trim()}` : column;
+
   const selectable = [
     ...Object.entries(baseFields).map(([key, column]) => `${column} AS "${key}"`),
-    ...Object.entries(fields).map(([key, column]) => `${column} AS "${key}"`),
+    ...Object.entries(fields).map(([key, column]) => `${qualify(column)} AS "${key}"`),
   ];
   if (definition.extraSelect) selectable.push(definition.extraSelect);
 
@@ -80,7 +92,7 @@ export function createRepository<T>(definition: RepositoryDefinition<T>) {
   function resolveSort(sortBy?: string): { column: string; direction: 'asc' | 'desc' } {
     const requested = sortBy ?? definition.defaultSort;
     const key = requested && sortable.has(requested) ? requested : (definition.defaultSort ?? 'id');
-    const dbColumn = allFields[key] ?? `${alias}.id`;
+    const dbColumn = allFields[key] ? qualify(allFields[key]) : `${alias}.id`;
     return { column: dbColumn, direction: definition.defaultSortOrder ?? 'asc' };
   }
 
@@ -103,7 +115,7 @@ export function createRepository<T>(definition: RepositoryDefinition<T>) {
       const column = fields[key];
       if (!column) continue;
       params.push(value);
-      conditions.push(`${alias}.${column} = $${params.length}`);
+      conditions.push(`${qualify(column)} = $${params.length}`);
     }
 
     return {

@@ -32,6 +32,10 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'Overview' },
       },
       {
+        path: 'dashboard',
+        redirect: { name: 'dashboard' },
+      },
+      {
         path: 'masterdata/users',
         name: 'masterdata.users',
         component: () => import('@/modules/masterdata/views/UsersView.vue'),
@@ -82,41 +86,37 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'work-orders',
         name: 'work-orders',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/modules/workorder/views/WorkOrdersView.vue'),
         meta: {
           title: 'Work Orders',
           permissions: ['workorder:read'],
-          plannedBy: 'Member 1 & 2 — Phase 3',
         },
       },
       {
         path: 'operator',
         name: 'operator',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/modules/operator/views/OperatorLogsView.vue'),
         meta: {
           title: 'Operator Playground',
           permissions: ['production:execute'],
-          plannedBy: 'Member 4 — Phase 4',
         },
       },
       {
         path: 'andon',
         name: 'andon',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/modules/andon/views/AndonEventsView.vue'),
         meta: {
           title: 'Andon Monitoring',
           permissions: ['andon:view'],
-          plannedBy: 'Member 3 — Phase 5',
         },
       },
       {
         path: 'analytics',
         name: 'analytics',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/modules/analytics/views/KpiSnapshotsView.vue'),
         meta: {
           title: 'Production Analytics',
           permissions: ['analytics:view'],
-          plannedBy: 'Member 2 — Phase 6',
         },
       },
       {
